@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 해석 프로그램</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; line-height: 1.6; }
+        textarea { width: 80%; max-width: 600px; height: 150px; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        button { padding: 10px 20px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+        #interpretation { margin-top: 25px; padding: 15px; border: 1px solid #eee; background-color: #f9f9f9; border-radius: 4px; min-height: 50px; white-space: pre-wrap; word-wrap: break-word; }
+        .loading { color: gray; font-style: italic; }
+        .error { color: red; font-weight: bold; }
+        h1, h2 { color: #333; }
+        p { color: #555; }
+    </style>
+</head>
+<body>
+    <h1>영어 해석 프로그램</h1>
+
+    <p>해석하고 싶은 영어 텍스트를 입력하세요:</p>
+    <textarea id="inputText" placeholder="여기에 영어 텍스트를 입력하세요..."></textarea><br>
+    <button onclick="interpretText()">해석하기</button>
+
+    <h2>해석 결과:</h2>
+    <div id="interpretation"></div>
+
+    <script>
+        async function interpretText() {
+            const inputText = document.getElementById('inputText').value;
+            const interpretationDiv = document.getElementById('interpretation');
+
+            if (!inputText.trim()) { // 입력된 텍스트가 없으면 오류 메시지 표시
+                interpretationDiv.innerHTML = '<span class="error">텍스트를 입력해주세요.</span>';
+                return;
+            }
+
+            interpretationDiv.innerHTML = '<span class="loading">해석 중... 잠시 기다려 주세요.</span>'; // 로딩 메시지 표시
+
+            try {
+                // /api/interpret 엔드포인트로 텍스트를 POST 요청으로 보냅니다.
+                const response = await fetch('/api/interpret', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: inputText }) // JSON 형식으로 텍스트 전송
+                });
+
+                if (!response.ok) { // 응답이 성공적이지 않으면 오류 처리
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '해석 중 문제가 발생했습니다.');
+                }
+
+                const data = await response.json();
+                interpretationDiv.innerHTML = data.interpretation; // 해석 결과 표시
+            } catch (error) {
+                console.error('오류 발생:', error);
+                interpretationDiv.innerHTML = `<span class="error">오류: ${error.message}</span>`; // 오류 메시지 표시
+            }
+        }
+    </script>
+</body>
+</html>
